@@ -22,6 +22,7 @@ module.exports = {
    * @param {CustomComponentContext} context 
    */
   invoke: async (context) => {
+    let dataAbsenceAll=[];
 
 await fetch(`https://fa-${credImport.server}-saasfademo1.ds-fa.oraclepdemos.com//hcmRestApi/resources/11.13.18.05/absences`,{
     method: 'get',
@@ -33,14 +34,21 @@ await fetch(`https://fa-${credImport.server}-saasfademo1.ds-fa.oraclepdemos.com/
 .then(json=>{
   for(let i=0;i<=10;i++){
   context.reply("PersonId: <b>"+json.items[i].personId+"</b>\n"+"startDate: "+json.items[i].startDate+"\n"+"endDate: "+json.items[i].endDate+"\n"+"comments: "+json.items[i].comments+"\n"+"absenceReason: "+json.items[i].absenceReason)
-
+  dataAbsenceAll[i]={
+    "PersonID": json.items[i].personId,
+    "StartDate": json.items[i].startDate,
+    "EndDate": json.items[i].endDate,
+    "Comments": json.items[i].comments,
+    "AbsenceReason": json.items[i].absenceReason
+    }
   }
+  context.variable("dataAbsAll",dataAbsenceAll)
   context.keepTurn(true)
-  context.transition("output")
+  context.transition("route1")
 })
 .catch(error=>{
   context.reply('We are facing issues please try again')
-  .transition('output')
+  .transition('route2')
   console.log(error)})
   }
 };
