@@ -1,16 +1,18 @@
 'use strict';
 var credImport=require('./cred.js')
+
+// Documentation for writing custom components: https://github.com/oracle/bots-node-sdk/blob/master/CUSTOM_COMPONENT.md
+
+// You can use your favorite http client package to make REST calls, however, the node fetch API is pre-installed with the bots-node-sdk.
+// Documentation can be found at https://www.npmjs.com/package/node-fetch
+// Un-comment the next line if you want to make REST calls using node-fetch. 
+// const fetch = require("node-fetch");
  
 module.exports = {
   metadata: () => ({
-    name: 'patchContactsData',
+    name: 'fetchDataFusionContact',
     properties: {
       input: { required: true, type: 'string' },
-      code: { required: true, type: 'string' },
-      FirstName: { required: true, type: 'string' },
-      LastName: { required: true, type: 'string' },
-      Phone: { required: true, type: 'string' },
-      Email: { required: true, type: 'string' },
     },
     supportedActions: ['route1', 'route2']
   }),
@@ -20,89 +22,50 @@ module.exports = {
    * @param {CustomComponentContext} context 
    */
   invoke: async (context,done) => {
-    let url,fn,ln,phn,mail,data;
-    let codeReceived=context.properties().code
-    let usrIP=context.properties().input
-    let fname=context.properties().FirstName
-    let lname=context.properties().LastName
-    let phone=context.properties().Phone
-    let email=context.properties().Email
+    let name,email,phone;
 
-     data = usrIP.split("|");
+    let imageRes,url,imageurl;
+    let codeReceived=context.properties().input
+    let dataCont;
 
-     fn = data[0];
-     ln = data[1];
-     mail = data[2];
-     phn = data[3];
-/////
-//unnessesery
-
-
-     context.variable("FirstNameCont", fn);
-     context.variable("LastNameCont", mail);
-     context.variable("phoneCont", phn);
-     context.variable("emailCont", mail);
-/////////////
-    //  context.done(true);
-    //  context.keepTurn(true);
-//////////
-
-//GET Data
-// let username="user_r13_a2f"
-// let password="dFw4E#6?"
-await fetch(`https://fa-${credImport.server}-saasfademo1.ds-fa.oraclepdemos.com//hcmRestApi/resources/11.13.18.05/emps?q=PersonNumber=`+codeReceived,{
+await fetch(`https://fa-${credImport.server}-saasfademo1.ds-fa.oraclepdemos.com//hcmRestApi/resources/11.13.18.05/emps?q=PersonNumber=${codeReceived}`,{
     method: 'get',
     headers: {
         'Authorization': 'Basic '+btoa(credImport.userName+':'+credImport.password),
     },
 })
 .then(response=>response.json())
-.then(async json=>{
-  ////////////////////
-  //code for patch
-  console.log(json)
-  url=json.items[0].links[0].href
-  console.log(url)
+.then( json=>{
+  name=json.items[0].DisplayName
+  email=json.items[0].WorkEmail
+  phone=json.items[0].WorkPhoneNumber
+//   dataCont=[
+//     {
+//         "website": "http://www.sample.com",
+//         "keywords": "select",
+//         "imageUrl": "https://www.google.com/url?sa=i&url=https%3A%2F%2Fpixabay.com%2Fvectors%2Favatar-icon-placeholder-facebook-1577909%2F&psig=AOvVaw2-puNjvjtqSmGcV8CLH2Hn&ust=1682241453938000&source=images&cd=vfe&ved=0CBEQjRxqFwoTCNCDkvWTvf4CFQAAAAAdAAAAABAE",
+//         "name": name,
+//         "description": "Phone: "+phone+"\n E-mail: "+email
+//     }
+// ] 
+context.reply("Name: <b>"+json.items[0].DisplayName+"</b>\n"+"Phone: "+json.items[0].WorkPhoneNumber+"\n"+"E-mail: "+json.items[0].WorkEmail+"l"+imageRes)
+// context.variable("dataCont",dataCont)
+context.keepTurn(true)
+context.transition("route1")
 
-// let username="user_r13_a2f"
-// let password="dFw4E#6?"
 
-var raw = JSON.stringify({
-    "FirstName": fn,
-    "LastName": ln,
-    "WorkMobilePhoneNumber": phn,
-    "WorkEmail": mail,
-  });
+  // context.logger().info(imageRes)
+// context.logger().info(dataCont);
+// context.reply("hey")
+})
+  .catch(error=>{
+    context.reply('not found')
+    context.keepTurn(true)
+    context.transition("route2")
+    console.log(error)})
 
-await fetch(url,{
-    method: 'PATCH',
-    headers: {
-        'Authorization': 'Basic '+btoa(credImport.userName+':'+credImport.password),
-        'Content-type': 'application/json'
-    },
-    body: raw,
-})
-.then(response=>response.json())
-.then(json=>{
-  console.log(json)
-  context.transition("route1")
-  context.keepTurn(true);
-  done();
-})
-.catch(error=>{
-  console.log(json)
-  context.transition("route2")
-  context.keepTurn(true);
-  done();
-})
-})
-/////////////////////////endpatch
-.catch(error=>{
-  console.log(json)
-  context.reply('fail')
-  context.transition("route2")
-  context.keepTurn(true);
-  done();
-})
-}
-};
+
+// context.logger().info(dataCont);
+// context.reply("dataCont")
+  }}
+
