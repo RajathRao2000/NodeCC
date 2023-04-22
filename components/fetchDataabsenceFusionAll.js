@@ -33,7 +33,6 @@ await fetch(`https://fa-${credImport.server}-saasfademo1.ds-fa.oraclepdemos.com/
 .then(response=>response.json())
 .then(json=>{
   for(let i=0;i<=10;i++){
-  context.reply("PersonId: <b>"+json.items[i].personId+"</b>\n"+"startDate: "+json.items[i].startDate+"\n"+"endDate: "+json.items[i].endDate+"\n"+"comments: "+json.items[i].comments+"\n"+"absenceReason: "+json.items[i].absenceReason)
   dataAbsenceAll[i]={
     "PersonID": json.items[i].personId,
     "StartDate": json.items[i].startDate,
